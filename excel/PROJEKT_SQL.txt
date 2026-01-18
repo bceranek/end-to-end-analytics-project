@@ -1,0 +1,182 @@
+PROJEKT: SQL
+
+
+Zapytania SQL:
+
+* analiza sprzedaży PH w podziale na kwartały
+- 1 cte zejście z poziomu pozycji do fv
+- 2 cte zejście z poziomu fv do agregacji na poziom ph
+- using() podobne co JOIN ON, ale bez duplikatów kolumn (łączymy na tych samych nazwach klucza)
+
+with poziom_fv as(
+	SELECT
+		s.ph_id,
+		s.sales_id,
+        CASE
+            WHEN strftime('%m', s.data_sprzedazy) <= '03'
+				THEN date(strftime('%Y', s.data_sprzedazy) || '-01-01')
+			WHEN strftime('%m', s.data_sprzedazy) <= '06'
+				THEN date(strftime('%Y', s.data_sprzedazy) || '-04-01')
+            WHEN strftime('%m', s.data_sprzedazy) <= '09'
+				THEN date(strftime('%Y', s.data_sprzedazy) || '-07-01')
+            ELSE date(strftime('%Y', s.data_sprzedazy) || '-10-01')
+        END AS kwartal,
+		min(s.klient_id) as klient_id,
+		round(sum(s.wartosc_netto), 2) as wartosc_netto_fv,
+		round(sum(s.koszt_wlasny), 2) as koszt_wlasny_fv,
+		COUNT(*) as ilosc_pozycji
+	FROM tabela_sprzedaz s
+	GROUP BY s.ph_id, s.sales_id, kwartal
+),
+
+poziom_ph as(
+	SELECT
+		ph_id,
+		kwartal,
+		round(sum(wartosc_netto_fv), 2) as suma_wartosci_netto,
+		round(sum(koszt_wlasny_fv), 2) as suma_kosztow_wlasnych,
+		count(*) as ilosc_fv,
+		round(avg(wartosc_netto_fv), 2) AS sr_wartosc_fv,
+		round(avg(ilosc_pozycji)) as sr_ilosc_poz_na_fv,
+		COUNT(DISTINCT klient_id) AS liczba_klientow		
+	FROM poziom_fv
+	GROUP BY ph_id, kwartal
+)
+
+SELECT
+	ph_id,
+	ph.imie || ' ' || ph.nazwisko as imie_nazwisko,
+	kwartal,
+	suma_wartosci_netto,
+	suma_kosztow_wlasnych,
+	ilosc_fv,
+	sr_wartosc_fv,
+	sr_ilosc_poz_na_fv,
+	liczba_klientow
+FROM poziom_ph 
+JOIN tabela_ph ph using(ph_id)
+ORDER by ph.ph_id, kwartal
+
+* analiza sprzedaży top 10 produktów w podziale na miesiące
+
+- 1 CTE łączna sprzedaż per produkt i top 10
+- 2 CTE dla wybranych produktów sprzedaż dla każdego miesiąca
+- WHERE s.product_id IN (SELECT product_id from top_produkty)
+filtr wybrany już z filtrowanych danych
+
+with top_produkty as(
+	SELECT
+		s.product_id,
+		sum(s.wartosc_netto) as suma_wartosci_netto,
+		sum(s.koszt_wlasny) as suma_kosztow_wlasnych
+	FROM tabela_sprzedaz s
+	GROUP by s.product_id
+	ORDER by suma_wartosci_netto desc
+	LIMIT 10
+),
+
+miesiace as(
+	SELECT
+		s.product_id,
+		strftime('%m', s.data_sprzedazy) AS miesiac,
+		sum(s.wartosc_netto) as suma_netto_miesiac,
+		sum(s.koszt_wlasny) as suma_kosztow_miesiac
+	FROM tabela_sprzedaz s
+	WHERE s.product_id IN (SELECT product_id from top_produkty)
+	GROUP BY s.product_id, miesiac
+)
+
+SELECT
+	m.product_id,
+	p.nazwa_produktu,
+	m.miesiac,
+	round(suma_netto_miesiac, 2) as suma_netto_miesiac,
+	round(suma_kosztow_miesiac, 2) as suma_kosztow_miesiac,
+	round(suma_netto_miesiac - suma_kosztow_miesiac, 2)  as marza
+FROM miesiace m
+JOIN tabela_produkt p USING(product_id)
+GROUP BY m.product_id, p.nazwa_produktu, m.miesiac
+
+
+* analiza kanałów sprzedaży 
+
+
+- SUM(wartosc_netto) OVER (PARTITION BY kwartal)
+liczy sumę sprzedaży w obrębie każdego kwartału,
+ale nie grupuje wierszy — zwraca tę sumę w każdej linii danego kwartału.
+
+WITH sprzedaz_kwartal AS (
+    SELECT
+        CASE
+            WHEN strftime('%m', s.data_sprzedazy) <= '03'
+                THEN date(strftime('%Y', s.data_sprzedazy) || '-01-01')
+            WHEN strftime('%m', s.data_sprzedazy) <= '06'
+                THEN date(strftime('%Y', s.data_sprzedazy) || '-04-01')
+            WHEN strftime('%m', s.data_sprzedazy) <= '09'
+                THEN date(strftime('%Y', s.data_sprzedazy) || '-07-01')
+            ELSE
+                date(strftime('%Y', s.data_sprzedazy) || '-10-01')
+        END AS kwartal,
+
+        s.kanal_sprzedazy,
+        SUM(s.wartosc_netto) AS wartosc_netto,
+        COUNT(DISTINCT s.sales_id) AS ilosc_fv
+    FROM tabela_sprzedaz s
+    GROUP BY kwartal, s.kanal_sprzedazy
+)
+
+SELECT
+    kwartal,
+    kanal_sprzedazy,
+    ROUND(wartosc_netto, 2) AS wartosc_netto,
+    ilosc_fv,
+	ROUND(wartosc_netto / SUM(wartosc_netto) OVER (PARTITION BY kwartal),4) AS udzial_proc
+FROM sprzedaz_kwartal
+ORDER BY kwartal, wartosc_netto DESC;
+
+
+* analiza sprzedaży podzielona na kraje i dywizje
+
+
+WITH fv AS (
+    SELECT
+        s.sales_id,
+        ph.kraj,
+        ph.dywizja,
+        strftime('%Y-%m', s.data_sprzedazy) AS miesiac,
+        SUM(s.wartosc_netto) AS wartosc_fv,
+        SUM(s.koszt_wlasny) AS koszt_fv,
+        (SUM(s.wartosc_netto) - SUM(s.koszt_wlasny)) / SUM(s.wartosc_netto) AS marza,
+        MIN(CAST(REPLACE(s.termin_platnosci, ' days', '') AS INTEGER)) AS termin_platnosci_dni
+    FROM tabela_sprzedaz s
+    JOIN tabela_ph ph USING (ph_id)
+    GROUP BY s.sales_id, ph.kraj, ph.dywizja, miesiac
+),
+
+statystyki AS (
+    SELECT
+        kraj,
+        dywizja,
+        miesiac,
+        SUM(wartosc_fv) AS suma_wartosc,
+        SUM(koszt_fv) AS suma_koszt,
+        AVG(marza) AS sr_marza_proc,
+        COUNT(*) AS ilosc_fv,
+        AVG(wartosc_fv) AS sr_wartosc_fv,
+        AVG(termin_platnosci_dni) AS sr_termin_platnosci
+    FROM fv
+    GROUP BY kraj, dywizja, miesiac
+)
+
+SELECT
+    kraj,
+    dywizja,
+    miesiac,
+    ROUND(suma_wartosc, 2) AS suma_wartosc,
+    ROUND(suma_koszt, 2) AS suma_koszt,
+    ROUND(sr_marza_proc, 3) AS sr_marza,
+    ilosc_fv,
+    ROUND(sr_wartosc_fv, 2) AS sr_wartosc_fv,
+    ROUND(sr_termin_platnosci, 1) AS sr_termin_platnosci_dni
+FROM statystyki
+ORDER BY kraj, dywizja, miesiac;
