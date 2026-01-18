@@ -1,0 +1,12 @@
+Kolumna,Opis
+product_id,"od 1 do 20, bedzie relacyjna z tabela_sprzedaz"
+kod_produktu,numer 6 cyfrowy kategoria+podkategoria+ 1-1000 zapisane np. 0045
+nazwa_produktu,slownik
+kategoria,kod kategorii produktu (01–10) oparty na pierwszym slowie nazwy produktu
+podkategoria,kod podkategorii (01–10)
+jm,slownik
+waga_jednostkowa_kg,slownik
+wartosc_netto,slownik
+wartosc_brutto,slownik
+koszt_wlasny,losowo miedzy 30-50% mniej niz wartosc_netto
+stock,losowo miedzy 200-1300

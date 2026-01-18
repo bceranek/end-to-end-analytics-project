@@ -1,0 +1,10 @@
+Kolumna,Opis
+ph_id,"od 1 do 20, bedzie relacyjna z tabela_sprzedaz"
+numer_pracownika,numer losowy od 1-500 zapisany 3 cyframi np. 003
+imie,slownik
+nazwisko,slownik
+kraj,"12 x PL, 4 x DE, 4x CZ"
+dywizja,jesli kraj= DE to (DE01 lub DE02 po 2 w kazdym); jesli kraj= CZ to (CZ 01lub CZ 02 po 2 w kazdym); jesli kraj= PL (PL01-PL04 po 3 w kazdym)
+czy_polska,jesli kraj= PL wtedy x
+email_sluzbowy,z malych liter(pierwszy znak imie + nazwisko + @budpol.pl
+telefon_sluzbowy,petla 0048603603660(+1) 
