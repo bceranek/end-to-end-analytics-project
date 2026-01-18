@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/ceran/Desktop/CV/Projekty/Budpol/db/budpol.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="125"/><column_width id="3" width="10104"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,15:maintabela_sprzedaz"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="sprzedaz_kanal" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="153"/><column index="2" value="135"/><column index="3" value="77"/><column index="4" value="110"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="sprzedaz_kanal_kwartal" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="75"/><column index="2" value="153"/><column index="3" value="135"/><column index="4" value="77"/><column index="5" value="110"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="sprzedaz_ph_kwartal" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="75"/><column index="2" value="201"/><column index="3" value="91"/><column index="4" value="197"/><column index="5" value="230"/><column index="6" value="77"/><column index="7" value="133"/><column index="8" value="178"/><column index="9" value="144"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="sprzedaz_top_10_prod_msc" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="1" mode="0"/></sort><column_widths><column index="1" value="104"/><column index="2" value="256"/><column index="3" value="75"/><column index="4" value="188"/><column index="5" value="214"/><column index="6" value="86"/></column_widths><filter_values/><conditional_formats><column index="18446744073709551615"/></conditional_formats><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="tabela_ph" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="6" mode="0"/></sort><column_widths><column index="1" value="59"/><column index="2" value="87"/><column index="3" value="121"/><column index="4" value="175"/><column index="5" value="52"/><column index="6" value="76"/><column index="7" value="105"/><column index="8" value="210"/><column index="9" value="163"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="tabela_sprzedaz" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="80"/><column index="2" value="145"/><column index="3" value="166"/><column index="4" value="155"/><column index="5" value="137"/><column index="6" value="59"/><column index="7" value="85"/><column index="8" value="153"/><column index="9" value="104"/><column index="10" value="52"/><column index="11" value="210"/><column index="12" value="57"/><column index="13" value="88"/><column index="14" value="135"/><column index="15" value="143"/><column index="16" value="127"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">WITH fv AS (
+    SELECT
+        s.sales_id,
+        ph.kraj,
+        ph.dywizja,
+        strftime('%Y-%m', s.data_sprzedazy) AS miesiac,
+        SUM(s.wartosc_netto) AS wartosc_fv,
+        SUM(s.koszt_wlasny) AS koszt_fv,
+        (SUM(s.wartosc_netto) - SUM(s.koszt_wlasny)) / SUM(s.wartosc_netto) AS marza,
+        MIN(CAST(REPLACE(s.termin_platnosci, ' days', '') AS INTEGER)) AS termin_platnosci_dni
+    FROM tabela_sprzedaz s
+    JOIN tabela_ph ph USING (ph_id)
+    GROUP BY s.sales_id, ph.kraj, ph.dywizja, miesiac
+),
+
+statystyki AS (
+    SELECT
+        kraj,
+        dywizja,
+        miesiac,
+        SUM(wartosc_fv) AS suma_wartosc,
+        SUM(koszt_fv) AS suma_koszt,
+        AVG(marza) AS sr_marza_proc,
+        COUNT(*) AS ilosc_fv,
+        AVG(wartosc_fv) AS sr_wartosc_fv,
+        AVG(termin_platnosci_dni) AS sr_termin_platnosci
+    FROM fv
+    GROUP BY kraj, dywizja, miesiac
+)
+
+SELECT
+    kraj,
+    dywizja,
+    miesiac,
+    ROUND(suma_wartosc, 2) AS suma_wartosc,
+    ROUND(suma_koszt, 2) AS suma_koszt,
+    ROUND(sr_marza_proc, 3) AS sr_marza,
+    ilosc_fv,
+    ROUND(sr_wartosc_fv, 2) AS sr_wartosc_fv,
+    ROUND(sr_termin_platnosci, 1) AS sr_termin_platnosci_dni
+FROM statystyki
+ORDER BY kraj, dywizja, miesiac;</sql><current_tab id="0"/></tab_sql></sqlb_project>
