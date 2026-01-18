@@ -1,0 +1,21 @@
+product_id,nazwa_produktu,jm,waga_jednostkowa_kg,wartosc_netto,wartosc_brutto,kategoria,podkategoria,kod_produktu,koszt_wlasny,stock
+1,Folia budowlana PE 0.3 mm,m,0.25,2.85,3.5,01,01,01010387,1.61,683
+2,Folia paroizolacyjna budowlana,m,0.15,3.41,4.2,01,02,01020285,2.15,598
+3,Folia fundamentowa kubelkowa,m,0.75,5.45,6.7,01,03,01030840,3.48,919
+4,Folia uszczelniajaca pod okna,m,0.12,5.12,6.3,01,04,01040117,3.19,1051
+5,Zaprawa murarska M5,szt,25.0,15.37,18.9,02,05,02050889,10.12,1147
+6,Zaprawa tynkarska wewnetrzna,szt,25.0,15.85,19.5,02,06,02060184,8.43,790
+7,Gladz szpachlowa finiszowa,szt,20.0,23.09,28.4,03,07,03070834,16.01,1075
+8,Gips budowlany szybkowiazacy,szt,25.0,13.17,16.2,04,08,04080274,7.66,266
+9,Tynk akrylowy elewacyjny,szt,25.0,58.54,72.0,05,09,05090037,37.95,920
+10,Tynk silikonowy elewacyjny,szt,25.0,68.7,84.5,05,10,05100026,36.52,894
+11,Hydroizolacja dwuskladnikowa,szt,20.0,78.05,96.0,06,11,06110336,51.58,559
+12,Grunt gleboko penetrujacy,szt,5.0,17.8,21.9,07,12,07120966,11.9,722
+13,Grunt sczepny pod tynki,szt,5.0,19.92,24.5,07,13,07130928,13.56,1243
+14,Pianka montazowa niskoprezna,szt,0.8,16.18,19.9,08,14,08140096,9.41,274
+15,Pianka montazowa wysokoprezna,szt,0.8,15.04,18.5,08,14,08140885,10.09,422
+16,Silikon sanitarny bialy,szt,0.3,14.55,17.9,09,15,09150459,7.5,1270
+17,Silikon uniwersalny bezbarwny,szt,0.3,13.41,16.5,09,16,09160394,6.98,416
+18,Kruszywo granitowe 2-8 mm,kg,1.0,0.45,0.55,10,17,10170213,0.28,601
+19,Kruszywo granitowe 8-16 mm,kg,1.0,0.55,0.68,10,17,10170250,0.36,674
+20,Kruszywo bazaltowe 2-16 mm,kg,1.0,0.62,0.76,10,18,10180271,0.38,621
